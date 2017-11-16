@@ -467,6 +467,101 @@ dmtxRegionUpdateCorners(DmtxDecode *dec, DmtxRegion *reg, DmtxVector2 p00,
    return DmtxPass;
 }
 
+extern DmtxPassFail
+dmtxRegionInfo(DmtxDecode *dec, DmtxRegion *reg, int *cx, int *cy, double *angle)
+{
+   double radians;
+   DmtxRay2 rLeft, rBottom, rTop, rRight;
+   DmtxVector2 p00, p10, p11, p01;
+
+   assert(reg->leftKnown != 0 && reg->bottomKnown != 0);
+
+   /* Build ray representing left edge */
+   rLeft.p.X = (double)reg->leftLoc.X;
+   rLeft.p.Y = (double)reg->leftLoc.Y;
+   radians = reg->leftAngle * (M_PI/DMTX_HOUGH_RES);
+   rLeft.v.X = cos(radians);
+   rLeft.v.Y = sin(radians);
+   rLeft.tMin = 0.0;
+   rLeft.tMax = dmtxVector2Norm(&rLeft.v);
+
+   /* Build ray representing bottom edge */
+   rBottom.p.X = (double)reg->bottomLoc.X;
+   rBottom.p.Y = (double)reg->bottomLoc.Y;
+   radians = reg->bottomAngle * (M_PI/DMTX_HOUGH_RES);
+   rBottom.v.X = cos(radians);
+   rBottom.v.Y = sin(radians);
+   rBottom.tMin = 0.0;
+   rBottom.tMax = dmtxVector2Norm(&rBottom.v);
+
+   /* Build ray representing top edge */
+   if(reg->topKnown != 0) {
+      rTop.p.X = (double)reg->topLoc.X;
+      rTop.p.Y = (double)reg->topLoc.Y;
+      radians = reg->topAngle * (M_PI/DMTX_HOUGH_RES);
+      rTop.v.X = cos(radians);
+      rTop.v.Y = sin(radians);
+      rTop.tMin = 0.0;
+      rTop.tMax = dmtxVector2Norm(&rTop.v);
+   }
+   else {
+      rTop.p.X = (double)reg->locT.X;
+      rTop.p.Y = (double)reg->locT.Y;
+      radians = reg->bottomAngle * (M_PI/DMTX_HOUGH_RES);
+      rTop.v.X = cos(radians);
+      rTop.v.Y = sin(radians);
+      rTop.tMin = 0.0;
+      rTop.tMax = rBottom.tMax;
+   }
+
+   /* Build ray representing right edge */
+   if(reg->rightKnown != 0) {
+      rRight.p.X = (double)reg->rightLoc.X;
+      rRight.p.Y = (double)reg->rightLoc.Y;
+      radians = reg->rightAngle * (M_PI/DMTX_HOUGH_RES);
+      rRight.v.X = cos(radians);
+      rRight.v.Y = sin(radians);
+      rRight.tMin = 0.0;
+      rRight.tMax = dmtxVector2Norm(&rRight.v);
+   }
+   else {
+      rRight.p.X = (double)reg->locR.X;
+      rRight.p.Y = (double)reg->locR.Y;
+      radians = reg->leftAngle * (M_PI/DMTX_HOUGH_RES);
+      rRight.v.X = cos(radians);
+      rRight.v.Y = sin(radians);
+      rRight.tMin = 0.0;
+      rRight.tMax = rLeft.tMax;
+   }
+
+   /* Calculate 4 corners, real or imagined */
+   if(dmtxRay2Intersect(&p00, &rLeft, &rBottom) == DmtxFail)
+      return DmtxFail;
+
+   if(dmtxRay2Intersect(&p10, &rBottom, &rRight) == DmtxFail)
+      return DmtxFail;
+
+   if(dmtxRay2Intersect(&p11, &rRight, &rTop) == DmtxFail)
+      return DmtxFail;
+
+   if(dmtxRay2Intersect(&p01, &rTop, &rLeft) == DmtxFail)
+      return DmtxFail;
+
+    /* printf("polarity=%d\n", reg->polarity); *
+    /* printf("p00=(%d, %d), p01=(%d, %d), p10=(%d, %d), p11=(%d, %d)\n",
+        (int)p00.X, (int)p00.Y, (int)p01.X, (int)p01.Y, (int)p10.X, (int)p10.Y, (int)p11.X, (int)p11.Y); */
+   DmtxPixelLoc code_center;
+   code_center.X = (int)(0.5+0.25*(p00.X+p10.X+p11.X+p01.X));
+   code_center.Y = (int)(0.5+0.25*(p00.Y+p10.Y+p11.Y+p01.Y));
+   /* printf("Center=(%d, %d)\n", code_center.X, code_center.Y); */
+   double a = atan2(p11.Y-p00.Y, p11.X-p00.X);
+   /* printf("Angle = %f, (%f degree)\n", a, a*180/3.1415926); */
+   *cx = code_center.X;
+   *cy = code_center.Y;
+   *angle = a;
+   return DmtxPass;
+}
+
 /**
  *
  *
