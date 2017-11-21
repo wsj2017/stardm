@@ -468,7 +468,8 @@ dmtxRegionUpdateCorners(DmtxDecode *dec, DmtxRegion *reg, DmtxVector2 p00,
 }
 
 extern DmtxPassFail
-dmtxRegionInfo(DmtxDecode *dec, DmtxRegion *reg, int *cx, int *cy, double *angle)
+dmtxRegionInfo(DmtxDecode *dec, DmtxRegion *reg, int *cx, int *cy, double *angle,
+               int *p00_x, int *p00_y, int *p11_x, int *p11_y)
 {
    double radians;
    DmtxRay2 rLeft, rBottom, rTop, rRight;
@@ -547,9 +548,17 @@ dmtxRegionInfo(DmtxDecode *dec, DmtxRegion *reg, int *cx, int *cy, double *angle
    if(dmtxRay2Intersect(&p01, &rTop, &rLeft) == DmtxFail)
       return DmtxFail;
 
-    /* printf("polarity=%d\n", reg->polarity); *
-    /* printf("p00=(%d, %d), p01=(%d, %d), p10=(%d, %d), p11=(%d, %d)\n",
-        (int)p00.X, (int)p00.Y, (int)p01.X, (int)p01.Y, (int)p10.X, (int)p10.Y, (int)p11.X, (int)p11.Y); */
+    printf("polarity=%d\n", reg->polarity); 
+    printf("p00=(%d, %d), p01=(%d, %d), p10=(%d, %d), p11=(%d, %d)\n",
+        (int)p00.X, (int)p00.Y, (int)p01.X, (int)p01.Y, (int)p10.X, (int)p10.Y, (int)p11.X, (int)p11.Y); 
+
+   int img_width = dmtxImageGetProp(dec->image, DmtxPropWidth)/dec->scale;
+   int img_height = dmtxImageGetProp(dec->image, DmtxPropHeight)/dec->scale;
+
+   /* Note: the result is adjusted to CV2 image coordinates
+       x(cv2) = x
+       y(cv2) = height-y
+   */
    DmtxPixelLoc code_center;
    code_center.X = (int)(0.5+0.25*(p00.X+p10.X+p11.X+p01.X));
    code_center.Y = (int)(0.5+0.25*(p00.Y+p10.Y+p11.Y+p01.Y));
@@ -557,8 +566,13 @@ dmtxRegionInfo(DmtxDecode *dec, DmtxRegion *reg, int *cx, int *cy, double *angle
    double a = atan2(p11.Y-p00.Y, p11.X-p00.X);
    /* printf("Angle = %f, (%f degree)\n", a, a*180/3.1415926); */
    *cx = code_center.X;
-   *cy = code_center.Y;
+   *cy = img_height-code_center.Y;
    *angle = a;
+
+   *p00_x = p00.X;
+   *p00_y = img_height-p00.Y;
+   *p11_x = p11.X;
+   *p11_y = img_height-p11.Y;
    return DmtxPass;
 }
 

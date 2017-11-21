@@ -618,7 +618,7 @@ extern void dmtxByteListPrint(DmtxByteList *list, char *prefix);
 
 extern char *dmtxVersion(void);
 
-extern DmtxPassFail dmtxRegionInfo(DmtxDecode *dec, DmtxRegion *reg, int *cx, int *cy, double *angle);
+extern DmtxPassFail dmtxRegionInfo(DmtxDecode *dec, DmtxRegion *reg, int *cx, int *cy, double *angle, int *p00_x, int *p00_y, int *p11_x, int *p11_y);
 
 #ifdef __cplusplus
 }
