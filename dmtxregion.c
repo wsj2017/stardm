@@ -548,9 +548,11 @@ dmtxRegionInfo(DmtxDecode *dec, DmtxRegion *reg, int *cx, int *cy, double *angle
    if(dmtxRay2Intersect(&p01, &rTop, &rLeft) == DmtxFail)
       return DmtxFail;
 
-    printf("polarity=%d\n", reg->polarity); 
+    /* printf("polarity=%d\n", reg->polarity); */
+    /*
     printf("p00=(%d, %d), p01=(%d, %d), p10=(%d, %d), p11=(%d, %d)\n",
         (int)p00.X, (int)p00.Y, (int)p01.X, (int)p01.Y, (int)p10.X, (int)p10.Y, (int)p11.X, (int)p11.Y); 
+    */
 
    int img_width = dmtxImageGetProp(dec->image, DmtxPropWidth)/dec->scale;
    int img_height = dmtxImageGetProp(dec->image, DmtxPropHeight)/dec->scale;
